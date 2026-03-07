@@ -1,0 +1,7 @@
+{
+  "name": "Nitro Delivery – Business Platform",
+  "description": "Award-winning B2B logistics platform (2026) with multi-language support, real-time tracking, and backend-ready architecture.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
