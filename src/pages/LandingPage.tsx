@@ -32,11 +32,13 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4 lg:gap-12">
             <Link to="/" className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter flex items-center gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                <Zap size={20} className="text-white fill-white sm:hidden" />
-                <Zap size={24} className="text-white fill-white hidden sm:block" />
-              </div>
-              NITRO
+              {/* Replace src with your real logo file placed in /public/logo-nitro-orders.png */}
+              <img
+                src="/logo-nitro-orders.png"
+                alt="Nitro Orders logo"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-contain shadow-xl shadow-blue-500/20 bg-white"
+              />
+              Nitro Orders
             </Link>
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">{t.landing.features}</a>
@@ -140,11 +142,11 @@ const LandingPage: React.FC = () => {
                 className="relative z-10"
               >
                 <div className="aspect-[4/5] bg-gray-900 rounded-[4rem] overflow-hidden shadow-2xl border-8 border-white">
+                  {/* Place your real hero image at /public/images/hero-delivery.jpg */}
                   <img 
-                    src="https://picsum.photos/seed/delivery/800/1000" 
-                    alt="Delivery" 
+                    src="/images/hero-delivery.jpg"
+                    alt="Nitro Orders delivery in action"
                     className="w-full h-full object-cover opacity-80"
-                    referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent" />
                 </div>
@@ -268,8 +270,8 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* B2B Solutions Section */}
-      <section id="b2b" className="py-20 sm:py-32 bg-gray-50 relative overflow-hidden">
+      {/* B2B Solutions / Features Section */}
+      <section id="features" className="py-20 sm:py-32 bg-gray-50 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <motion.div 
@@ -314,11 +316,11 @@ const LandingPage: React.FC = () => {
               className="relative"
             >
               <div className="aspect-square bg-blue-600 rounded-[2.5rem] sm:rounded-[4rem] overflow-hidden shadow-2xl shadow-blue-500/30">
+                {/* Place your real B2B/warehouse image at /public/images/b2b-partners.jpg */}
                 <img 
-                  src="https://picsum.photos/seed/logistics/800/800" 
-                  alt="Logistics" 
+                  src="/images/b2b-partners.jpg"
+                  alt="Business partners using Nitro Orders"
                   className="w-full h-full object-cover opacity-80 mix-blend-overlay"
-                  referrerPolicy="no-referrer"
                 />
               </div>
               <div className="absolute -bottom-6 sm:-bottom-10 -left-6 sm:-left-10 bg-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-2xl border border-gray-100 space-y-4 max-w-[200px] sm:max-w-xs">
@@ -338,8 +340,8 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Driver Section */}
-      <section className="py-20 sm:py-32 bg-white relative overflow-hidden">
+      {/* Driver Section (About Our Courier Network) */}
+      <section id="about" className="py-20 sm:py-32 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="bg-gray-900 rounded-[2.5rem] sm:rounded-[4rem] p-8 sm:p-16 lg:p-24 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 shadow-2xl">
             <div className="flex-1 space-y-6 sm:space-y-8 text-center lg:text-left">
@@ -364,11 +366,11 @@ const LandingPage: React.FC = () => {
               </a>
             </div>
             <div className="w-full lg:w-1/3 aspect-[4/5] sm:aspect-square lg:aspect-[3/4] rounded-[2rem] sm:rounded-[3rem] overflow-hidden relative group">
+              {/* Place your real courier photo at /public/images/courier-driver.jpg */}
               <img 
-                src="https://picsum.photos/seed/courier/600/800" 
-                alt="Courier" 
+                src="/images/courier-driver.jpg"
+                alt="Nitro Orders driver"
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                referrerPolicy="no-referrer"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-60" />
             </div>
@@ -440,11 +442,11 @@ const LandingPage: React.FC = () => {
             
             <div className="relative">
               <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-400 rounded-[3rem] overflow-hidden shadow-2xl relative group">
+                {/* Place another real courier / fleet photo at /public/images/courier-driver-2.jpg */}
                 <img 
-                  src="https://picsum.photos/seed/courier/800/800" 
-                  alt="Nitro Courier" 
+                  src="/images/courier-driver-2.jpg"
+                  alt="Nitro Orders courier network" 
                   className="w-full h-full object-cover mix-blend-overlay opacity-50 group-hover:scale-110 transition-transform duration-700"
-                  referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-2xl">
