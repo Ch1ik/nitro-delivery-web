@@ -32,11 +32,12 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-4 lg:gap-12">
             <Link to="/" className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter flex items-center gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                <Zap size={20} className="text-white fill-white sm:hidden" />
-                <Zap size={24} className="text-white fill-white hidden sm:block" />
-              </div>
-              NITRO
+              <img
+                src="/logo-nitro-orders.png"
+                alt="Nitro Orders"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-contain bg-white"
+              />
+              Nitro Orders
             </Link>
             <div className="hidden lg:flex items-center gap-8">
               <a href="#features" className="text-sm font-black text-gray-400 hover:text-gray-900 transition-colors uppercase tracking-widest">{t.landing.features}</a>
@@ -314,7 +315,7 @@ const LandingPage: React.FC = () => {
             >
               <div className="aspect-square bg-blue-600 rounded-[2.5rem] sm:rounded-[4rem] overflow-hidden shadow-2xl shadow-blue-500/30">
                 <img 
-                  src="https://picsum.photos/seed/logistics/800/800"
+                  src="/images/hero-delivery.jpg"
                   alt="Business partners using Nitro Orders"
                   className="w-full h-full object-cover opacity-80 mix-blend-overlay"
                 />
@@ -363,7 +364,7 @@ const LandingPage: React.FC = () => {
             </div>
             <div className="w-full lg:w-1/3 aspect-[4/5] sm:aspect-square lg:aspect-[3/4] rounded-[2rem] sm:rounded-[3rem] overflow-hidden relative group">
               <img 
-                src="https://picsum.photos/seed/courier/600/800"
+                src="/images/courier-driver.png"
                 alt="Nitro Orders driver"
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
               />
@@ -438,7 +439,7 @@ const LandingPage: React.FC = () => {
             <div className="relative">
               <div className="aspect-square bg-gradient-to-br from-blue-600 to-blue-400 rounded-[3rem] overflow-hidden shadow-2xl relative group">
                 <img 
-                  src="https://picsum.photos/seed/courier/800/800"
+                  src="/images/courier-driver-2.png"
                   alt="Nitro Orders courier network" 
                   className="w-full h-full object-cover mix-blend-overlay opacity-50 group-hover:scale-110 transition-transform duration-700"
                 />
@@ -464,10 +465,12 @@ const LandingPage: React.FC = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-16 sm:mb-20">
             <div className="space-y-6">
               <Link to="/" className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tighter flex items-center gap-2">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl shadow-blue-500/20">
-                  <Zap size={20} className="text-white fill-white" />
-                </div>
-                NITRO
+                <img
+                  src="/logo-nitro-orders.png"
+                  alt="Nitro Orders"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-contain bg-white"
+                />
+                Nitro Orders
               </Link>
               <p className="text-gray-500 font-medium leading-relaxed">
                 {t.landing.footerDesc}
