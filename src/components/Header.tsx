@@ -2,12 +2,29 @@ import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import Notifications, { NotificationService } from './Notifications';
 import { LogOut, Bell, User, Search, Menu } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  notifications?: any[];
+}
+
+const Header: React.FC<HeaderProps> = ({ notifications = [] }) => {
   const { logout, userRole } = useAuth();
   const { t, isRTL } = useLanguage();
+
+  const handleMarkAsRead = (id: string) => {
+    NotificationService.getInstance().markAsRead(id);
+  };
+
+  const handleDismiss = (id: string) => {
+    NotificationService.getInstance().dismiss(id);
+  };
+
+  const handleClearAll = () => {
+    NotificationService.getInstance().clearAll();
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-xl border-b border-gray-100 px-4 sm:px-8 py-3 flex items-center justify-between shadow-sm shadow-black/[0.01]">
@@ -38,28 +55,28 @@ const Header: React.FC = () => {
       <div className="flex items-center gap-2 sm:gap-6">
         <LanguageSwitcher />
         
-        <div className="flex items-center gap-1 sm:gap-3">
-          <button className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all relative group">
-            <Bell size={20} className="group-hover:scale-110 transition-transform" />
-            <span className={cn("absolute top-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white", isRTL ? 'left-2.5' : 'right-2.5')} />
-          </button>
-          
-          <div className="h-6 w-px bg-gray-100 mx-1 hidden sm:block" />
-          
-          <div className="flex items-center gap-3 pl-1 sm:pl-3">
-            <div className={cn("hidden sm:block", isRTL ? 'text-left' : 'text-right')}>
-              <p className="text-xs font-bold text-gray-900">Nitro Business</p>
-              <p className="text-[10px] text-gray-400 font-medium">{isRTL ? 'شريك معتمد' : 'Verified Partner'}</p>
-            </div>
-            <button 
-              onClick={logout}
-              className="flex items-center gap-2 p-1 rounded-2xl hover:bg-gray-50 transition-all group"
-            >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all">
-                <User size={20} />
-              </div>
-            </button>
+        <Notifications
+          notifications={notifications}
+          onMarkAsRead={handleMarkAsRead}
+          onDismiss={handleDismiss}
+          onClearAll={handleClearAll}
+        />
+        
+        <div className="h-6 w-px bg-gray-100 mx-1 hidden sm:block" />
+        
+        <div className="flex items-center gap-3 pl-1 sm:pl-3">
+          <div className={cn("hidden sm:block", isRTL ? 'text-left' : 'text-right')}>
+            <p className="text-xs font-bold text-gray-900">Nitro Business</p>
+            <p className="text-[10px] text-gray-400 font-medium">{isRTL ? 'شريك معتمد' : 'Verified Partner'}</p>
           </div>
+          <button 
+            onClick={logout}
+            className="flex items-center gap-2 p-1 rounded-2xl hover:bg-gray-50 transition-all group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:shadow-lg group-hover:shadow-blue-500/30 transition-all">
+              <User size={20} />
+            </div>
+          </button>
         </div>
       </div>
     </header>

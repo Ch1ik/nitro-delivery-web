@@ -13,9 +13,19 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
 import CreateDeliveryModal from './components/CreateDeliveryModal';
+import Notifications, { NotificationService } from './components/Notifications';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, userRole, isLoading } = useAuth();
+  const [notifications, setNotifications] = React.useState([]);
+
+  // Initialize notification service
+  React.useEffect(() => {
+    NotificationService.getInstance().requestBrowserPermission();
+    
+    const unsubscribe = NotificationService.getInstance().subscribe(setNotifications);
+    return unsubscribe;
+  }, []);
 
   if (isLoading) {
     return (
@@ -42,7 +52,7 @@ const AppContent: React.FC = () => {
               <div className="flex flex-col lg:flex-row min-h-screen">
                 <div className="hidden lg:block"><Sidebar /></div>
                 <div className="flex-1 flex flex-col min-h-screen">
-                  <Header />
+                  <Header notifications={notifications} />
                   <main className="flex-1 p-4 sm:p-6 lg:p-8 mt-4 lg:mt-20 pb-32 lg:pb-8">
                     <Routes>
                       {userRole === 'business' && (

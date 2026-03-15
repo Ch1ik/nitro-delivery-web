@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { getDb } from '../db/database';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { randomUUID } from 'crypto';
+import { io } from '../index';
 
 const router = Router();
 
@@ -119,6 +120,11 @@ router.post('/', requireAuth, (req: Request, res: Response) => {
 
   const delivery = db.prepare('SELECT * FROM deliveries WHERE id=?').get(id) as any;
   const deliveryStops = db.prepare('SELECT * FROM delivery_stops WHERE delivery_id=? ORDER BY position').all(id);
+  
+  // Emit real-time updates
+  io.to(`business-${req.user!.businessId}`).emit('delivery-created', { ...delivery, stops: deliveryStops });
+  io.to('admin').emit('delivery-created', { ...delivery, stops: deliveryStops });
+  
   return res.status(201).json({ ...delivery, stops: deliveryStops });
 });
 
@@ -129,8 +135,8 @@ router.patch('/:id/status', requireAdmin, (req: Request, res: Response) => {
   if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
 
   const db = getDb();
-  if (!db.prepare('SELECT id FROM deliveries WHERE id=?').get(req.params.id))
-    return res.status(404).json({ error: 'Delivery not found' });
+  const delivery = db.prepare('SELECT * FROM deliveries WHERE id=?').get(req.params.id) as any;
+  if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
 
   const now = Math.floor(Date.now() / 1000);
   db.prepare('UPDATE deliveries SET status=?, updated_at=? WHERE id=?').run(status, now, req.params.id);
@@ -139,6 +145,11 @@ router.patch('/:id/status', requireAdmin, (req: Request, res: Response) => {
 
   const updated = db.prepare('SELECT * FROM deliveries WHERE id=?').get(req.params.id) as any;
   const stops = db.prepare('SELECT * FROM delivery_stops WHERE delivery_id=? ORDER BY position').all(req.params.id);
+  
+  // Emit real-time updates
+  io.to(`business-${delivery.business_id}`).emit('delivery-status-updated', { ...updated, stops });
+  io.to('admin').emit('delivery-status-updated', { ...updated, stops });
+  
   return res.json({ ...updated, stops });
 });
 
@@ -147,7 +158,17 @@ router.patch('/:id/stops/:stopId', requireAdmin, (req: Request, res: Response) =
   const { status } = req.body;
   if (!['pending','delivered','failed'].includes(status)) return res.status(400).json({ error: 'Invalid stop status' });
   const db = getDb();
+  
+  // Get delivery for business_id
+  const delivery = db.prepare('SELECT business_id FROM deliveries WHERE id=?').get(req.params.id) as any;
+  if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+  
   db.prepare('UPDATE delivery_stops SET status=? WHERE id=? AND delivery_id=?').run(status, req.params.stopId, req.params.id);
+  
+  // Emit real-time updates
+  io.to(`business-${delivery.business_id}`).emit('delivery-stop-updated', { deliveryId: req.params.id, stopId: req.params.stopId, status });
+  io.to('admin').emit('delivery-stop-updated', { deliveryId: req.params.id, stopId: req.params.stopId, status });
+  
   return res.json({ success: true });
 });
 

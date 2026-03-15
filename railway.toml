@@ -1,0 +1,35 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run server"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+gracefulShutdownTimeout = 60
+
+[env]
+PORT = "4000"
+NODE_ENV = "production"
+
+[[services]]
+name = "nitro-delivery-api"
+
+[services.sources]
+type = "git"
+repository = "https://github.com/Ch1ik/nitro-delivery-web.git"
+
+[services.build]
+builder = "NIXPACKS"
+buildCommand = "npm install && npm run build"
+
+[services.deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10
+
+[services.env]
+JWT_SECRET = "@jwt_secret"
+FRONTEND_URL = "@frontend_url"

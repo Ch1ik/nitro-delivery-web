@@ -78,6 +78,29 @@ function initSchema() {
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','delivered','failed'))
     );
 
+    CREATE TABLE IF NOT EXISTS drivers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT,
+      photo_url TEXT,
+      vehicle_type TEXT NOT NULL DEFAULT 'motorcycle' CHECK(vehicle_type IN ('motorcycle','car','van','bicycle')),
+      license_plate TEXT,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      rating REAL DEFAULT 5.0,
+      total_deliveries INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+
+    CREATE TABLE IF NOT EXISTS driver_assignments (
+      id TEXT PRIMARY KEY,
+      delivery_id TEXT NOT NULL REFERENCES deliveries(id) ON DELETE CASCADE,
+      driver_id TEXT NOT NULL REFERENCES drivers(id) ON DELETE CASCADE,
+      assigned_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      status TEXT NOT NULL DEFAULT 'assigned' CHECK(status IN ('assigned','accepted','rejected','completed')),
+      notes TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
@@ -104,6 +127,9 @@ function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_businesses_user_id ON businesses(user_id);
     CREATE INDEX IF NOT EXISTS idx_signup_requests_created_at ON signup_requests(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_drivers_is_active ON drivers(is_active);
+    CREATE INDEX IF NOT EXISTS idx_driver_assignments_delivery_id ON driver_assignments(delivery_id);
+    CREATE INDEX IF NOT EXISTS idx_driver_assignments_driver_id ON driver_assignments(driver_id);
   `);
 
   // Seed settings
@@ -161,5 +187,20 @@ function initSchema() {
   if (!reqExists) {
     database.prepare("INSERT INTO signup_requests (id, business_name, email, phone, address, description, status, password) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)")
       .run('req-001', 'Batna Tech', 'contact@batnatech.dz', '0770123456', 'Rue 19 Mai 1956, Batna', 'E-commerce electronics store with 50+ daily deliveries', 'demo123');
+  }
+
+  // Seed demo drivers
+  const driverExists = database.prepare("SELECT id FROM drivers LIMIT 1").get();
+  if (!driverExists) {
+    const drivers = [
+      { id: 'driver-001', name: 'Karim Bensalah', phone: '0770111222', email: 'karim.driver@nitro.dz', vehicle_type: 'motorcycle', license_plate: '12345 ABC 123' },
+      { id: 'driver-002', name: 'Sara Hamidi', phone: '0770222333', email: 'sara.driver@nitro.dz', vehicle_type: 'car', license_plate: '67890 DEF 456' },
+      { id: 'driver-003', name: 'Mohamed Cherif', phone: '0770333444', email: 'mohamed.driver@nitro.dz', vehicle_type: 'van', license_plate: '11111 GHI 789' },
+    ];
+    
+    const insertDriver = database.prepare("INSERT INTO drivers (id, name, phone, email, vehicle_type, license_plate) VALUES (?, ?, ?, ?, ?, ?)");
+    drivers.forEach(driver => insertDriver.run(driver.id, driver.name, driver.phone, driver.email, driver.vehicle_type, driver.license_plate));
+    
+    console.log('✅ Demo drivers created');
   }
 }

@@ -6,6 +6,7 @@ import { Package, TrendingUp, Clock, CheckCircle2, Plus, MapPin, Settings, Navig
 import { motion } from 'motion/react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { deliveryService, DeliveryStats } from '../services/api';
+import { websocketService } from '../services/websocket';
 import { cn } from '../lib/utils';
 
 const chartData = [
@@ -20,9 +21,28 @@ const BusinessDashboard: React.FC = () => {
 
   useEffect(() => {
     deliveryService.getStats().then(setStats).catch(console.error);
+    
+    // Set up WebSocket listeners for real-time updates
+    const handleDeliveryCreated = () => {
+      deliveryService.getStats().then(setStats).catch(console.error);
+    };
+    
+    const handleDeliveryStatusUpdated = () => {
+      deliveryService.getStats().then(setStats).catch(console.error);
+    };
+    
+    websocketService.onDeliveryCreated(handleDeliveryCreated);
+    websocketService.onDeliveryStatusUpdated(handleDeliveryStatusUpdated);
+    
+    // Fallback to custom events for compatibility
     const handleCreated = () => deliveryService.getStats().then(setStats).catch(console.error);
     window.addEventListener('delivery-created', handleCreated);
-    return () => window.removeEventListener('delivery-created', handleCreated);
+    
+    return () => {
+      websocketService.off('delivery-created', handleDeliveryCreated);
+      websocketService.off('delivery-status-updated', handleDeliveryStatusUpdated);
+      window.removeEventListener('delivery-created', handleCreated);
+    };
   }, []);
 
   const refusalDisplay = stats && stats.total != null && stats.denied != null

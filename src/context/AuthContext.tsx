@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService, adminService, profileService, SignupRequest } from '../services/api';
+import { websocketService } from '../services/websocket';
 
 type UserRole = 'admin' | 'business';
 
@@ -20,6 +21,7 @@ interface Business extends BusinessProfile {
 interface AuthContextType {
   isAuthenticated: boolean;
   userRole: UserRole;
+  businessId?: string;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   setUserRole: (role: UserRole) => void;
@@ -45,6 +47,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>('business');
+  const [businessId, setBusinessId] = useState<string>();
   const [isLoading, setIsLoading] = useState(true);
   const [signupRequests, setSignupRequests] = useState<SignupRequest[]>([]);
   const [nightTariffEnabled, setNightTariffState] = useState(false);
@@ -53,6 +56,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     photo_url: 'https://picsum.photos/seed/business/200/200',
   });
   const [businesses, setBusinesses] = useState<Business[]>([]);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (isAuthenticated) {
+      websocketService.connect();
+      
+      if (userRole === 'business' && businessId) {
+        websocketService.joinBusiness(businessId);
+      } else if (userRole === 'admin') {
+        websocketService.joinAdmin();
+      }
+    } else {
+      websocketService.disconnect();
+    }
+
+    return () => {
+      if (!isAuthenticated) {
+        websocketService.disconnect();
+      }
+    };
+  }, [isAuthenticated, userRole, businessId]);
 
   useEffect(() => {
     const token = localStorage.getItem('nitro_token');
@@ -63,6 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserRole(user.role);
           if (user.role === 'business' && user.profile) {
             setBusinessProfile({ name: user.profile.name, phone: user.profile.phone, email: user.email, photo_url: user.profile.photo_url, fixed_price: user.profile.fixed_price });
+            setBusinessId(user.profile.id);
           }
         })
         .catch(() => localStorage.removeItem('nitro_token'))
@@ -77,6 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const me = await authService.me();
     if (me.role === 'business' && me.profile) {
       setBusinessProfile({ name: me.profile.name, phone: me.profile.phone, email: me.email, photo_url: me.profile.photo_url, fixed_price: me.profile.fixed_price });
+      setBusinessId(me.profile.id);
     }
     if (me.role === 'admin') {
       await Promise.all([refreshSignupRequests(), refreshBusinesses()]);
@@ -89,6 +115,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('nitro_token');
     setIsAuthenticated(false);
     setUserRole('business');
+    setBusinessId(undefined);
+    websocketService.disconnect();
   };
 
   const submitSignupRequest = async (request: { businessName: string; email: string; phone: string; password: string; address?: string; description?: string; website?: string }) => {
@@ -133,7 +161,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshBusinesses = async () => setBusinesses(await adminService.getBusinesses());
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, userRole, login, logout, setUserRole, signupRequests, submitSignupRequest, approveRequest, rejectRequest, setBusinessPassword, deleteBusiness, nightTariffEnabled, setNightTariffEnabled, businessProfile, updateBusinessProfile, businesses, setBusinessFixedPrice, refreshSignupRequests, refreshBusinesses, isLoading }}>
+    <AuthContext.Provider value={{ isAuthenticated, userRole, businessId, login, logout, setUserRole, signupRequests, submitSignupRequest, approveRequest, rejectRequest, setBusinessPassword, deleteBusiness, nightTariffEnabled, setNightTariffEnabled, businessProfile, updateBusinessProfile, businesses, setBusinessFixedPrice, refreshSignupRequests, refreshBusinesses, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
