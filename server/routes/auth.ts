@@ -11,9 +11,10 @@ const router = Router();
 router.post('/login', (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: 'Email and password required' });
+  const emailTrim = String(email).trim().toLowerCase();
 
   const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
+  const user = db.prepare('SELECT * FROM users WHERE email = ?').get(emailTrim) as any;
   if (!user || !bcrypt.compareSync(password, user.password)) {
     return res.status(401).json({ error: 'Invalid email or password' });
   }
@@ -51,17 +52,18 @@ router.post('/signup', (req: Request, res: Response) => {
   if (!password || String(password).length < 6) {
     return res.status(400).json({ error: 'Password is required and must be at least 6 characters' });
   }
+  const emailTrim = String(email).trim().toLowerCase();
 
   const db = getDb();
-  const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+  const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(emailTrim);
   if (existingUser) return res.status(409).json({ error: 'An account with this email already exists' });
 
-  const existingReq = db.prepare("SELECT id FROM signup_requests WHERE email = ? AND status = 'pending'").get(email);
+  const existingReq = db.prepare("SELECT id FROM signup_requests WHERE email = ? AND status = 'pending'").get(emailTrim);
   if (existingReq) return res.status(409).json({ error: 'A pending request with this email already exists' });
 
   const id = randomUUID();
   db.prepare('INSERT INTO signup_requests (id, business_name, email, phone, address, description, website, password) VALUES (?,?,?,?,?,?,?,?)')
-    .run(id, businessName, email, phone, address ?? null, description ?? null, website ?? null, String(password));
+    .run(id, businessName, emailTrim, phone, address ?? null, description ?? null, website ?? null, String(password));
 
   return res.status(201).json({ message: 'Request submitted. You will be notified once approved.' });
 });

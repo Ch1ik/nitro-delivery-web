@@ -20,9 +20,18 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 // ── Delivery Detail Modal ─────────────────────────────────────────────────────
-const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onClose: () => void; onStatusChange: (id: string, status: string) => void }> = ({ delivery, isAdmin, onClose, onStatusChange }) => {
+const DeliveryDetailModal: React.FC<{
+  delivery: Delivery;
+  isAdmin: boolean;
+  onClose: () => void;
+  onStatusChange: (id: string, status: string) => void;
+  onStopStatusChange?: (deliveryId: string, stopId: string, status: string) => Promise<void>;
+}> = ({ delivery, isAdmin, onClose, onStatusChange, onStopStatusChange }) => {
   const [updating, setUpdating] = useState(false);
-  const cfg = STATUS_CONFIG[delivery.status] || STATUS_CONFIG.pending;
+  const [localDelivery, setLocalDelivery] = useState(delivery);
+  React.useEffect(() => setLocalDelivery(delivery), [delivery]);
+  const d = localDelivery;
+  const cfg = STATUS_CONFIG[d.status] || STATUS_CONFIG.pending;
   const StatusIcon = cfg.icon;
 
   const adminActions = [
@@ -30,12 +39,18 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
     { status: 'in_progress', label: 'In Progress', color: 'bg-purple-600 text-white' },
     { status: 'delivered',   label: 'Delivered',   color: 'bg-green-600 text-white' },
     { status: 'denied',      label: 'Deny',        color: 'bg-red-600 text-white' },
-  ].filter(a => a.status !== delivery.status);
+  ].filter(a => a.status !== d.status);
 
   const handleAction = async (status: string) => {
     setUpdating(true);
-    try { await onStatusChange(delivery.id, status); }
+    try { await onStatusChange(d.id, status); }
     finally { setUpdating(false); }
+  };
+
+  const handleStopStatusChange = async (stopId: string, status: string) => {
+    if (!onStopStatusChange) return;
+    await onStopStatusChange(d.id, stopId, status);
+    setLocalDelivery(prev => prev ? { ...prev, stops: prev.stops?.map(s => s.id === stopId ? { ...s, status: status as 'pending' | 'delivered' | 'failed' } : s) ?? [] } : prev);
   };
 
   const formatDate = (ts: number) => new Date(ts * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -53,8 +68,8 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><Package size={20} /></div>
             <div>
-              <h2 className="text-xl font-black text-gray-900">{delivery.id}</h2>
-              <p className="text-xs text-gray-400 font-medium">{formatDate(delivery.created_at)}</p>
+              <h2 className="text-xl font-black text-gray-900">{d.id}</h2>
+              <p className="text-xs text-gray-400 font-medium">{formatDate(d.created_at)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -68,16 +83,16 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {/* Client */}
           <Section title="Client Info">
-            <InfoRow icon={User} label="Name" value={delivery.client_name} />
-            <InfoRow icon={Phone} label="Phone" value={delivery.client_phone} />
+            <InfoRow icon={User} label="Name" value={d.client_name} />
+            <InfoRow icon={Phone} label="Phone" value={d.client_phone} />
           </Section>
 
           {/* Business (admin only) */}
-          {isAdmin && delivery.business_name && (
+          {isAdmin && d.business_name && (
             <Section title="Business">
-              <InfoRow icon={Building2} label="Name" value={delivery.business_name} />
-              {delivery.business_email && <InfoRow icon={User} label="Email" value={delivery.business_email} />}
-              {delivery.business_phone && <InfoRow icon={Phone} label="Phone" value={delivery.business_phone} />}
+              <InfoRow icon={Building2} label="Name" value={d.business_name} />
+              {d.business_email && <InfoRow icon={User} label="Email" value={d.business_email} />}
+              {d.business_phone && <InfoRow icon={Phone} label="Phone" value={d.business_phone} />}
             </Section>
           )}
 
@@ -88,10 +103,10 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
                 <div className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-black shrink-0 mt-0.5">P</div>
                 <div>
                   <p className="text-xs font-black text-blue-600 uppercase tracking-widest">Pickup</p>
-                  <p className="text-sm font-bold text-gray-900">{delivery.pickup_location}</p>
+                  <p className="text-sm font-bold text-gray-900">{d.pickup_location}</p>
                 </div>
               </div>
-              {delivery.stops?.map((stop, i) => (
+              {d.stops?.map((stop, i) => (
                 <div key={stop.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                   <div className={cn('w-6 h-6 rounded-full text-white text-xs flex items-center justify-center font-black shrink-0 mt-0.5',
                     stop.status === 'delivered' ? 'bg-green-500' : stop.status === 'failed' ? 'bg-red-500' : 'bg-gray-400')}>
@@ -100,13 +115,13 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
                   <div className="flex-1">
                     <p className="text-xs font-black text-gray-500 uppercase tracking-widest">Stop {i + 1}</p>
                     <p className="text-sm font-bold text-gray-900">{stop.address}</p>
-                    {stop.client_name && stop.client_name !== delivery.client_name && (
+                    {stop.client_name && stop.client_name !== d.client_name && (
                       <p className="text-xs text-gray-400 font-medium mt-0.5">{stop.client_name} · {stop.client_phone}</p>
                     )}
                   </div>
-                  {isAdmin && (
+                  {isAdmin && onStopStatusChange && (
                     <select value={stop.status}
-                      onChange={async e => { await deliveryService.updateStopStatus(delivery.id, stop.id, e.target.value); }}
+                      onChange={async e => { await handleStopStatusChange(stop.id, e.target.value); }}
                       className={cn('text-xs font-black border rounded-lg px-2 py-1 outline-none', 
                         stop.status === 'delivered' ? 'bg-green-50 text-green-600 border-green-100' :
                         stop.status === 'failed' ? 'bg-red-50 text-red-600 border-red-100' :
@@ -122,11 +137,11 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
           </Section>
 
           {/* Notes */}
-          {delivery.notes && (
+          {d.notes && (
             <Section title="Notes">
               <div className="flex items-start gap-2 bg-gray-50 p-3 rounded-xl">
                 <FileText size={14} className="text-gray-400 shrink-0 mt-0.5" />
-                <p className="text-sm text-gray-600 font-medium">{delivery.notes}</p>
+                <p className="text-sm text-gray-600 font-medium">{d.notes}</p>
               </div>
             </Section>
           )}
@@ -135,14 +150,14 @@ const DeliveryDetailModal: React.FC<{ delivery: Delivery; isAdmin: boolean; onCl
           <Section title="Pricing">
             <div className="flex items-center justify-between bg-blue-50 p-4 rounded-xl">
               <span className="font-bold text-gray-700">Delivery fee</span>
-              <span className={delivery.price === -1 ? 'text-amber-600 font-black' : 'text-2xl font-black text-blue-600'}>
-                {delivery.price === -1 ? 'Unknown' : `${delivery.price} DA`}
+              <span className={d.price === -1 ? 'text-amber-600 font-black' : 'text-2xl font-black text-blue-600'}>
+                {d.price === -1 ? 'Unknown' : `${d.price} DA`}
               </span>
             </div>
-            {delivery.package_price != null && (
+            {d.package_price != null && (
               <div className="flex items-center justify-between mt-2 text-sm font-bold text-gray-600">
                 <span>Package value</span>
-                <span>{delivery.package_price} DA</span>
+                <span>{d.package_price} DA</span>
               </div>
             )}
           </Section>
@@ -253,9 +268,15 @@ const DeliveryListPage: React.FC<DeliveryListPageProps> = ({ isAdminView = false
       <AnimatePresence>
         {selectedDelivery && (
           <DeliveryDetailModal
-            delivery={selectedDelivery} isAdmin={isAdminView && userRole === 'admin'}
+            delivery={selectedDelivery}
+            isAdmin={isAdminView && userRole === 'admin'}
             onClose={() => setSelectedDelivery(null)}
             onStatusChange={handleStatusChange}
+            onStopStatusChange={isAdminView && userRole === 'admin' ? async (deliveryId, stopId, status) => {
+              await deliveryService.updateStopStatus(deliveryId, stopId, status);
+              setSelectedDelivery(prev => prev?.id === deliveryId ? { ...prev, stops: prev.stops?.map(s => s.id === stopId ? { ...s, status: status as 'pending' | 'delivered' | 'failed' } : s) ?? [] } : prev);
+              setDeliveries(prev => prev.map(d => d.id === deliveryId ? { ...d, stops: d.stops?.map(s => s.id === stopId ? { ...s, status: status as 'pending' | 'delivered' | 'failed' } : s) ?? [] } : d));
+            } : undefined}
           />
         )}
       </AnimatePresence>

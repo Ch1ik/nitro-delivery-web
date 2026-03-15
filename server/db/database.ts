@@ -95,11 +95,22 @@ function initSchema() {
   try { database.exec("ALTER TABLE deliveries ADD COLUMN notes TEXT"); } catch {}
   try { database.exec("ALTER TABLE deliveries ADD COLUMN updated_at INTEGER NOT NULL DEFAULT (unixepoch())"); } catch {}
 
+  // Indexes for real data performance
+  database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_deliveries_business_id ON deliveries(business_id);
+    CREATE INDEX IF NOT EXISTS idx_deliveries_status ON deliveries(status);
+    CREATE INDEX IF NOT EXISTS idx_deliveries_created_at ON deliveries(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_delivery_stops_delivery_id ON delivery_stops(delivery_id);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_businesses_user_id ON businesses(user_id);
+    CREATE INDEX IF NOT EXISTS idx_signup_requests_created_at ON signup_requests(created_at DESC);
+  `);
+
   // Seed settings
   const nightTariff = database.prepare("SELECT value FROM settings WHERE key = 'night_tariff_enabled'").get();
   if (!nightTariff) database.prepare("INSERT INTO settings (key, value) VALUES ('night_tariff_enabled', 'false')").run();
 
-  // Seed admin
+  // Seed admin (demo credentials: see README)
   const adminExists = database.prepare("SELECT id FROM users WHERE role = 'admin' LIMIT 1").get();
   if (!adminExists) {
     const hashedPassword = bcrypt.hashSync('admin123', 10);
@@ -107,7 +118,7 @@ function initSchema() {
     console.log('✅ Default admin: admin@nitro.dz / admin123');
   }
 
-  // Seed demo business
+  // Seed demo business (demo credentials: see README)
   const bizExists = database.prepare("SELECT id FROM users WHERE email = 'partner@nitro.dz' LIMIT 1").get();
   if (!bizExists) {
     const userId = 'user-001';
@@ -124,7 +135,7 @@ function initSchema() {
       { id: 'NIT-1021', client_name: 'Lila Kaci', client_phone: '0770777888', pickup: 'Bab Ezzouar', pickup_lat: 36.7196, pickup_lng: 3.1826, status: 'denied', price: 550, created_at: now - 90000 },
       { id: 'NIT-1020', client_name: 'Karim Said', client_phone: '0770999000', pickup: 'Bordj El Kiffan', pickup_lat: 36.7402, pickup_lng: 3.2136, status: 'delivered', price: 450, created_at: now - 1209600 },
     ];
-    const insertDelivery = database.prepare("INSERT INTO deliveries (id, business_id, client_name, client_phone, pickup_location, pickup_lat, pickup_lng, status, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    const insertDelivery = database.prepare("INSERT INTO deliveries (id, business_id, client_name, client_phone, pickup_location, pickup_lat, pickup_lng, no_destination, status, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)");
     const insertStop = database.prepare("INSERT INTO delivery_stops (id, delivery_id, position, address, lat, lng, client_name, client_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
 
     const stops: Record<string, {address: string, lat: number, lng: number}[]> = {

@@ -12,6 +12,7 @@ router.get('/businesses', requireAdmin, (_req: Request, res: Response) => {
   const businesses = db.prepare(`
     SELECT b.*, u.email,
       (SELECT COUNT(*) FROM deliveries d WHERE d.business_id = b.id) as total_deliveries,
+      (SELECT COUNT(*) FROM deliveries d WHERE d.business_id = b.id) as total_deliveries_count,
       (SELECT COUNT(*) FROM deliveries d WHERE d.business_id = b.id AND d.status = 'delivered') as delivered_count
     FROM businesses b LEFT JOIN users u ON b.user_id = u.id
     WHERE b.status = 'approved' ORDER BY b.name
@@ -84,12 +85,13 @@ router.patch('/signup-requests/:id', requireAdmin, (req: Request, res: Response)
   db.prepare('UPDATE signup_requests SET status = ? WHERE id = ?').run(newStatus, req.params.id);
 
   if (action === 'approve') {
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(request.email) as any;
+    const emailTrim = String(request.email).trim().toLowerCase();
+    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(emailTrim) as any;
     if (!existingUser) {
       const userId = randomUUID();
       const bizId = randomUUID();
       const hashedPassword = bcrypt.hashSync(finalPassword!, 10);
-      db.prepare("INSERT INTO users (id, email, password, role) VALUES (?, ?, ?, 'business')").run(userId, request.email, hashedPassword);
+      db.prepare("INSERT INTO users (id, email, password, role) VALUES (?, ?, ?, 'business')").run(userId, emailTrim, hashedPassword);
       db.prepare("INSERT INTO businesses (id, user_id, name, phone, status) VALUES (?, ?, ?, ?, 'approved')").run(bizId, userId, request.business_name, request.phone);
     }
   }

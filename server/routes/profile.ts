@@ -29,9 +29,10 @@ router.patch('/', requireAuth, (req: Request, res: Response) => {
   }
 
   if (req.user!.role === 'admin' && email && typeof email === 'string' && email.trim()) {
-    const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(email.trim(), req.user!.userId);
+    const emailTrim = String(email).trim().toLowerCase();
+    const existing = db.prepare('SELECT id FROM users WHERE email = ? AND id != ?').get(emailTrim, req.user!.userId);
     if (existing) return res.status(409).json({ error: 'Email already in use' });
-    db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email.trim(), req.user!.userId);
+    db.prepare('UPDATE users SET email = ? WHERE id = ?').run(emailTrim, req.user!.userId);
   }
 
   const user = db.prepare('SELECT id, email, role FROM users WHERE id = ?').get(req.user!.userId) as any;

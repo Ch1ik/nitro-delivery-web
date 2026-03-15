@@ -85,7 +85,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => { localStorage.removeItem('nitro_token'); setIsAuthenticated(false); setUserRole('business'); };
+  const logout = () => {
+    localStorage.removeItem('nitro_token');
+    setIsAuthenticated(false);
+    setUserRole('business');
+  };
 
   const submitSignupRequest = async (request: { businessName: string; email: string; phone: string; password: string; address?: string; description?: string; website?: string }) => {
     await authService.signup(request);
